@@ -8,10 +8,6 @@ menu "Boot"
 	source "$BR2_EXTERNAL_RESCUE_PATH/package/boot/plymouth/Config.in"
 endmenu
 
-menu "Fonts"
-	source "$BR2_EXTERNAL_RESCUE_PATH/package/fonts/noto-sans-fonts/Config.in"
-endmenu
-
 menu "Tools"
 	source "$BR2_EXTERNAL_RESCUE_PATH/package/tools/install2emmc/Config.in"
 endmenu
