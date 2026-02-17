@@ -1,4 +1,5 @@
 [Daemon]
-Theme=reglinux
+Theme=reglinux-arcade
 ShowDelay=0
-DeviceTimeout=8
+DeviceTimeout=2
+DeviceScale=1

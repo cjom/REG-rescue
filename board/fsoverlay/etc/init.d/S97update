@@ -66,7 +66,7 @@ function remove_trigger() {
 # Edit given file with new boot partition UUID
 function replaceuuid() {
     # First try to replace label=REGLINUX with uuid=*, just in case we are updating a very old disk
-    find "/boot/" -type f \( -iname "LinuxLoader.cfg" -o -iname "extlinux.conf" -o -iname "cmdline.txt" -o -iname "boot.ini" -o -iname "uEnv.txt" -o -iname "syslinux.cfg" -o -iname "grub.cfg" \) -exec sed -i "s/label=REGLINUX/uuid=${NEWUUID}/g;s/uuid=[a-fA-F0-9-]*/uuid=${NEWUUID}/g" {} \+
+    find "/boot/" -type f \( -iname "LinuxLoader.cfg" -o -iname "extlinux.conf" -o -iname "cmdline.txt" -o -iname "boot.ini" -o -iname "uEnv.txt" -o -iname "syslinux.cfg" -o -iname "grub.cfg" \) -exec sed -i "s/label=REGLINUX/root=UUID=${NEWUUID}/g;s/root=UUID=[a-fA-F0-9-]*/root=UUID=${NEWUUID}/g" {} \+
     if [ -f /boot/boot.scr ] && [ -f /boot/rebuild-boot-script.sh ]; then
         bash /boot/rebuild-boot-script.sh
     fi
