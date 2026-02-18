@@ -31,7 +31,8 @@ jobs:
       dorelease: ${{ false || steps.compile_step.outputs.dorelease }}
     strategy:
       matrix:
-        platform: [aarch64, armhf, armv7, mipsel, riscv64, x86_64]
+        # platform: [aarch64, armhf, armv7, mipsel, riscv64, x86_64]
+        platform: [aarch64, armv7, x86_64]
       fail-fast: false
     steps:
       - name: compile-${{ matrix.platform }}

@@ -1,0 +1,31 @@
+diff --git a/package/dejavu/Config.in b/package/dejavu/Config.in
+index 5d21e56088..3eeafaff60 100644
+--- a/package/dejavu/Config.in
++++ b/package/dejavu/Config.in
+@@ -12,7 +12,7 @@ if BR2_PACKAGE_DEJAVU
+ 
+ config BR2_PACKAGE_DEJAVU_MONO
+ 	bool "mono fonts"
+-	default y
++	default n
+ 
+ config BR2_PACKAGE_DEJAVU_SANS
+ 	bool "sans fonts"
+@@ -20,14 +20,14 @@ config BR2_PACKAGE_DEJAVU_SANS
+ 
+ config BR2_PACKAGE_DEJAVU_SERIF
+ 	bool "serif fonts"
+-	default y
++	default n
+ 
+ config BR2_PACKAGE_DEJAVU_SANS_CONDENSED
+ 	bool "sans condensed fonts"
+-	default y
++	default n
+ 
+ config BR2_PACKAGE_DEJAVU_SERIF_CONDENSED
+ 	bool "serif condensed fonts"
+-	default y
++	default n
+ 
+ endif
