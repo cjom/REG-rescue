@@ -15,12 +15,18 @@ Window.SetBackgroundBottomColor(0, 0, 0);
 screen_w = Window.GetWidth();
 screen_h = Window.GetHeight();
 
-# Scale factor: half size for screens narrower than 1200px
+# Scale factor: half size for screens narrower than 1200px,
+# three-quarter size for screens up to 1280px, full size above
 if (screen_w < 1200) {
     scale = 0.5;
     font_title = "Sans Bold 10";
     font_sub   = "Sans 8";
     font_msg   = "Sans 7";
+} else if (screen_w <= 1280) {
+    scale = 0.75;
+    font_title = "Sans Bold 15";
+    font_sub   = "Sans 12";
+    font_msg   = "Sans 10";
 } else {
     scale = 1.0;
     font_title = "Sans Bold 20";
@@ -33,16 +39,16 @@ if (screen_w < 1200) {
 # ---------------------------------------------------------------------------
 Plymouth.SetRefreshRate(30);
 
-# Fade-in phase: frames 0-3, each faded in over 15 ticks (0.5s) = 60 ticks total (2s)
+# Fade-in phase: frames 0-3, each faded in over 8 ticks (0.27s) = 32 ticks total (1.07s)
 fade_frames = 4;
-fade_ticks = 15;
+fade_ticks = 8;
 fade_total = fade_frames * fade_ticks;
 
-# Hold phase: frames 4-9, each shown for 10 ticks
+# Hold phase: frames 4-9, each shown for 6 ticks
 num_frames = 10;
 hold_start_frame = 4;
 hold_count = num_frames - hold_start_frame;
-hold_ticks = 10;
+hold_ticks = 6;
 hold_total = hold_count * hold_ticks;
 
 anim_total = fade_total + hold_total;
