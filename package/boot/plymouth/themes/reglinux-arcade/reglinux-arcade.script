@@ -22,7 +22,7 @@ if (screen_w < 1200) {
     font_title = "Sans Bold 10";
     font_sub   = "Sans 8";
     font_msg   = "Sans 7";
-} else if (screen_w <= 1280) {
+} else if (screen_w < 1300) {
     scale = 0.75;
     font_title = "Sans Bold 15";
     font_sub   = "Sans 12";
