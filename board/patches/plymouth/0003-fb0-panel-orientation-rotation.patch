@@ -114,7 +114,7 @@ index 3ce9b3d9..c21bde34 100644
  static void
  flush_area_to_xrgb32_device (ply_renderer_backend_t *backend,
                               ply_renderer_head_t    *head,
-@@ -269,14 +353,160 @@ create_backend (const char     *device_name,
+@@ -269,14 +353,193 @@ create_backend (const char     *device_name,
          return backend;
  }
  
@@ -225,6 +225,32 @@ index 3ce9b3d9..c21bde34 100644
 +}
 +
 +static ply_pixel_buffer_rotation_t
++get_rotation_from_fbcon_kernel_param (void)
++{
++        const char *fbcon_value;
++        const char *rotate_param;
++        int rotate_value;
++
++        /* Look for fbcon=rotate:<N> in the kernel command line */
++        fbcon_value = ply_kernel_command_line_get_string_after_prefix ("fbcon=");
++        if (fbcon_value == NULL)
++                return PLY_PIXEL_BUFFER_ROTATE_UPRIGHT;
++
++        /* Within the fbcon= value, find the rotate:<N> option */
++        rotate_param = strstr (fbcon_value, "rotate:");
++        if (rotate_param == NULL)
++                return PLY_PIXEL_BUFFER_ROTATE_UPRIGHT;
++
++        /* Verify it's at the start or preceded by a comma */
++        if (rotate_param != fbcon_value && rotate_param[-1] != ',')
++                return PLY_PIXEL_BUFFER_ROTATE_UPRIGHT;
++
++        rotate_param += strlen ("rotate:");
++        rotate_value = atoi (rotate_param);
++        return fbcon_rotate_to_rotation (rotate_value);
++}
++
++static ply_pixel_buffer_rotation_t
 +get_panel_rotation (void)
 +{
 +        char *value;
@@ -244,7 +270,14 @@ index 3ce9b3d9..c21bde34 100644
 +                return rotation;
 +        }
 +
-+        /* 3. Fall back to fb sysfs rotation (fb0/rotate or fbcon/rotate) */
++        /* 3. Try fbcon=rotate:<N> kernel parameter */
++        rotation = get_rotation_from_fbcon_kernel_param ();
++        if (rotation != PLY_PIXEL_BUFFER_ROTATE_UPRIGHT) {
++                ply_trace ("fbcon=rotate kernel parameter rotation: %d", rotation);
++                return rotation;
++        }
++
++        /* 4. Fall back to fb sysfs rotation (fb0/rotate or fbcon/rotate) */
 +        return get_rotation_from_fb_sysfs ();
 +}
 +
