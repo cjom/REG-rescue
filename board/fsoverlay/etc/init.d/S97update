@@ -327,7 +327,8 @@ if [ "$TASKS" -ge 10 ]; then
         # resize the partition
         echo "Resizing the partition to 100%" >>"$LOG"
         ((CURRENTSTEP += 150))
-        next_start=$(parted -m "${DISK}" unit s print | awk -F: -v p="${PARTNUM}" '$1 ~ /^[0-9]+$/ && $1 > p { print $2; exit }' | tr -d 's')
+        share_end=$(sgdisk -i "${PARTNUM}" "${DISK}" | awk '/Last sector:/ { print $3 }')
+        next_start=$(sgdisk -p "${DISK}" | awk -v e="${share_end}" '$1 ~ /^[0-9]+$/ && $2 > e { if (min == "" || $2 < min) min = $2 } END { if (min != "") print min }')
         if [ -n "${next_start}" ]; then
             new_end=$((next_start - 1))
             cmdoutput $((CURRENTSTEP / TOTALSTEPS)) "parted -s -m -f ${DISK} resizepart ${PARTNUM} ${new_end}s" "Resizing partition ${SHAREPART}"
