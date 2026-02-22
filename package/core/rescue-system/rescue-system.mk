@@ -6,7 +6,7 @@
 
 RESCUE_SYSTEM_SOURCE=
 
-RESCUE_SYSTEM_VERSION = 0.9
+RESCUE_SYSTEM_VERSION = 1.0
 RESCUE_SYSTEM_DATE_TIME = $(shell date "+%Y/%m/%d %H:%M")
 RESCUE_SYSTEM_DATE = $(shell date "+%Y/%m/%d")
 RESCUE_SYSTEM_DEPENDENCIES =
@@ -44,6 +44,7 @@ define RESCUE_SYSTEM_INSTALL_TARGET_CMDS
 	$(INSTALL) -D -m 0755 $(BR2_EXTERNAL_RESCUE_PATH)/package/core/rescue-system/dbus.sh $(TARGET_DIR)/etc/profile.d/dbus.sh
 
     # Other scripts needed
+    $(INSTALL) -D -m 0755 $(BR2_EXTERNAL_RESCUE_PATH)/package/core/rescue-system/system-autologin $(TARGET_DIR)/usr/bin/
     $(INSTALL) -D -m 0755 $(BR2_EXTERNAL_RESCUE_PATH)/package/core/rescue-system/system-mount $(TARGET_DIR)/usr/bin/
     $(INSTALL) -D -m 0755 $(BR2_EXTERNAL_RESCUE_PATH)/package/core/rescue-system/system-part $(TARGET_DIR)/usr/bin/
     $(INSTALL) -D -m 0755 $(BR2_EXTERNAL_RESCUE_PATH)/package/core/rescue-system/system-usbmount $(TARGET_DIR)/usr/bin/

@@ -7,6 +7,7 @@
 0f1e375992de585df0580c9ef85158e8  fs/squashfs/Config.in
 8635723306eb367f07b3b8fc57243880  fs/squashfs/squashfs.mk
 46657d0c66d1a81d822a9d9869c15597  package/acpid/acpid.mk
+c69a142bde4b4e38fda001538ef81faa  package/dejavu/Config.in
 7d250d3076d1f4e49ca0536684449e2a  package/libdrm/libdrm.mk
 ad422751e4a60689e4198ccf4441ae25  package/ncurses/ncurses.mk
 4aec3b9512408660528c3c04a1b76221  package/ntfs-3g/ntfs-3g.mk

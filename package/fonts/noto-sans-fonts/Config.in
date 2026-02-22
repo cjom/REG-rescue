@@ -1,6 +1,0 @@
-config BR2_PACKAGE_NOTO_SANS_FONTS
-    bool "noto-sans-fonts"
-    help
-      Noto Sans fonts.
-      
-      https://github.com/notofonts/NotoSans

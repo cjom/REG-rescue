@@ -15,7 +15,6 @@ si6::sysinit:/etc/init.d/rcS
 # S0:3:respawn:/sbin/getty -L 115200 ttyAML0 vt100 # GENERIC_SERIAL
 # 2:3:respawn:/sbin/getty 38400 tty2
 # 3:3:respawn:/sbin/getty 38400 tty3
-0:3:respawn:/sbin/getty -l /bin/bash -n 38400 tty0
 
 # Stuff to do for the 3-finger salute
 ca::ctrlaltdel:/sbin/reboot

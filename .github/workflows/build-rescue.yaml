@@ -61,7 +61,7 @@ jobs:
           find "${GITHUB_WORKSPACE}/buildroot/output/images/" -type f -name 'REG-linux-rescue*' -exec mv "{}" "${GITHUB_WORKSPACE}/REG-rescue-COMPILED/REG-linux-rescue-${{ matrix.platform }}-${rescueversion}-${sufixdate}" \; -exec echo "dorelease=${{ true }}" >> "$GITHUB_OUTPUT" \;
       - name: upload_artifacts_${{ matrix.platform }}
         id: upload_artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: REG-linux-rescue-${{ matrix.platform }}-${{ steps.compile_step.outputs.rescueversion }}-${{ steps.compile_step.outputs.sufixdate }}
           path: REG-rescue-COMPILED/
@@ -72,7 +72,7 @@ jobs:
     if: ${{ needs.build.outputs.dorelease }}
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           path: REG-rescue-COMPILED/
           merge-multiple: true
