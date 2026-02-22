@@ -20,7 +20,7 @@ endef
 
 define PLYMOUTH_INITD
 	$(INSTALL) -m 0755 $(PLYMOUTH_PATH)/config/S002plymouth $(TARGET_DIR)/etc/init.d/
-	$(INSTALL) -m 0644 $(PLYMOUTH_PATH)/config/plymouthd.defaults $(TARGET_DIR)/etc/plymouth/plymouthd.conf
+	$(INSTALL) -m 0644 $(PLYMOUTH_PATH)/config/plymouthd.conf $(TARGET_DIR)/etc/plymouth/plymouthd.conf
 
 	# Themes
 	rm -rf $(TARGET_DIR)/usr/share/plymouth/themes/*
