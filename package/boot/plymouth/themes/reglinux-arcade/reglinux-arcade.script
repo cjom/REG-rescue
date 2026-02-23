@@ -142,6 +142,9 @@ if (notfirstrun != 1) {
     bar_fg_sprite.SetPosition(bar_left, bar_y, 11);
     bar_fg_sprite.SetOpacity(0);
 
+    bg_counter = 35; # opacity = bg_counter / 100; range 5..35
+    bg_dir = -1;     # -1 = fading out, 1 = fading in
+
     # Message line (below progress bar)
     msg_ref_img = Image.Text("X", 1, 1, 1, 1, font_msg);
     msg_y = bar_y + bar_h + Math.Int(10 * scale);
@@ -309,6 +312,13 @@ fun refresh_callback() {
             global.current_hold_index = global.num_frames - 1;
         }
         global.hold_sprite.SetOpacity(1);
+
+        if (global.mode == "updates" || global.mode == "system-reset") {
+            global.bg_counter = global.bg_counter + global.bg_dir;
+            if (global.bg_counter <= 5)  { global.bg_dir =  1; }
+            if (global.bg_counter >= 35) { global.bg_dir = -1; }
+            global.bar_bg_sprite.SetOpacity(global.bg_counter / 100);
+        }
 
         # Boot mode: show RESCUE MODE (steady)
         if (global.mode == "boot") {
