@@ -65,11 +65,20 @@ function remove_trigger() {
 
 # Edit given file with new boot partition UUID
 function replaceuuid() {
-    # First try to replace label=REGLINUX with uuid=*, just in case we are updating a very old disk
-    find "/boot/" -type f \( -iname "LinuxLoader.cfg" -o -iname "extlinux.conf" -o -iname "cmdline.txt" -o -iname "boot.ini" -o -iname "uEnv.txt" -o -iname "syslinux.cfg" -o -iname "grub.cfg" \) -exec sed -i "s/label=REGLINUX/root=UUID=${NEWUUID}/g;s/root=UUID=[a-fA-F0-9-]*/root=UUID=${NEWUUID}/g" {} \+
-    if [ -f /boot/boot.scr ] && [ -f /boot/rebuild-boot-script.sh ]; then
-        bash /boot/rebuild-boot-script.sh
+    # First try to replace label=REGLINUX with root=UUID=*, just in case we are updating a very old disk
+    if [ -f /boot/boot.scr ]; then
+        dumpimage -T script -p 0 -o /tmp/boot.cmd.tmp /boot/boot.scr
+        OFFSET=$(grep -abo -m1 '^#' /tmp/boot.cmd.tmp | cut -d: -f1)
+        if [ -n "$OFFSET" ]; then
+            dd if="/tmp/boot.cmd.tmp" of="/tmp/boot.cmd" bs=1 skip="$OFFSET" 2>/dev/null
+        else
+            echo "Error extracting boot.cmd from boot.scr"
+            display_error
+        fi
+        sed -i "s/label=REGLINUX/root=UUID=${NEWUUID}/g;s/root=UUID=[a-fA-F0-9-]*/root=UUID=${NEWUUID}/g" {} /tmp/boot.cmd
+        mkimage -C none -A arm64 -T script -d /tmp/boot.cmd /boot/boot.scr
     fi
+    find "/boot/" -type f \( -iname "LinuxLoader.cfg" -o -iname "extlinux.conf" -o -iname "cmdline.txt" -o -iname "boot.cmd" -o -iname "boot.ini" -o -iname "uEnv.txt" -o -iname "syslinux.cfg" -o -iname "grub.cfg" \) -exec sed -i "s/label=REGLINUX/root=UUID=${NEWUUID}/g;s/root=UUID=[a-fA-F0-9-]*/root=UUID=${NEWUUID}/g" {} \+
 }
 
 function extractupgradefiles() {
