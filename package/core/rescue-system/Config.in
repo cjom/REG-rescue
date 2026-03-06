@@ -54,6 +54,7 @@ config BR2_PACKAGE_RESCUE_SYSTEM
 	select BR2_PACKAGE_INSTALL2EMMC			if BR2_PACKAGE_RESCUE_TARGET_AARCH64 # Install system to emmc
 	select BR2_PACKAGE_UBOOT_TOOLS		# mkimage needed
 	select BR2_PACKAGE_UBOOT_TOOLS_MKIMAGE	# mkimage needed to rebuil boot.scr after new partition uuid
+	select BR2_PACKAGE_UBOOT_TOOLS_DUMPIMAGE	# dumpimage needed to rebuil boot.scr after new partition uuid
 
 	# text editor
 	select BR2_PACKAGE_NANO				# basic nano emulator
