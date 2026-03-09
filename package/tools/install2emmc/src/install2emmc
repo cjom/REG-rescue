@@ -5,7 +5,7 @@
 BOOTPART=$(grep -m 1 /boot /proc/mounts | sed 's| /boot .*||')
 BOOTDISK="${BOOTPART%p[0-9]*}"
 EMMCDISK=""
-TMP=/tmp/mnt/
+TMP=/tmp/mnt
 
 for TYPE in /sys/class/block/mmcblk*/device/type; do
     if grep -q "MMC" "${TYPE}"; then
@@ -53,12 +53,15 @@ echo "Erasing eMMC ..."
 dd if=/dev/zero of="${EMMCDISK}" bs=1M count=1 conv=fsync > /dev/null 2>&1
 
 echo "Creating partitions"
-SYSTEM_SIZE=$(lsblk -bno size "${BOOTPART}")
+SYSTEM_SIZE=$(blockdev --getsize64 "${BOOTPART}")
+# Round up to MiB boundary, add 1 MiB for the initial alignment offset
+SYSTEM_MIB=$(( (SYSTEM_SIZE + 1048575) / 1048576 + 1 ))
 parted -s "${EMMCDISK}" mklabel msdos
-parted -s "${EMMCDISK}" -a optimal mkpart primary fat32 0% ${SYSTEM_SIZE}
+parted -s "${EMMCDISK}" -a optimal mkpart primary fat32 1MiB "${SYSTEM_MIB}MiB"
 parted -s "${EMMCDISK}" set 1 boot on
-parted -s "${EMMCDISK}" -a optimal mkpart primary ext4 ${SYSTEM_SIZE} 100%
+parted -s "${EMMCDISK}" -a optimal mkpart primary ext4 "${SYSTEM_MIB}MiB" 100%
 sync
+partprobe "${EMMCDISK}"
 
 echo "Creating filesystems"
 dd if=/dev/zero of="${EMMCDISK}p1" bs=1M count=1 conv=fsync > /dev/null 2>&1
