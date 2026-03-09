@@ -2,48 +2,43 @@
 
 # SPDX-License-Identifier: GPL-2.0
 # Copyright (C) 2021-present Team LibreELEC (https://libreelec.tv)
-
+BOOTPART=$(grep -m 1 /boot /proc/mounts | sed 's| /boot .*||')
+BOOTDISK="${BOOTPART%p[0-9]*}"
+EMMCDISK=""
 TMP=/tmp/mnt/
-
-SYSTEM_SIZE=@SYSTEM_SIZE@
-UUID_SYSTEM="$(date '+%d%m')-$(date '+%M%S')"
-UUID_STORAGE="$(uuidgen)"
-BOOT=$(grep /flash /proc/mounts | awk '{print $1}' | sed 's/p[012]//g')
-DISK=""
 
 for TYPE in /sys/class/block/mmcblk*/device/type; do
     if grep -q "MMC" "${TYPE}"; then
-        DISK="/dev/$(echo "${TYPE}" | awk -F/ '{print $5}')"
+        EMMCDISK="/dev/$(echo "${TYPE}" | awk -F/ '{print $5}')"
         break
     fi
 done
 
-if [ -z "${DISK}" ]; then
+if [ -z "${EMMCDISK}" ]; then
     echo "Can't find eMMC module!"
     exit 1
 fi
 
-if [ "${BOOT}" = "${DISK}" ]; then
-    echo "Your device is booted from the eMMC module!"
+if [ "${BOOTDISK}" = "${EMMCDISK}" ]; then
+    echo "Your device has booted from the eMMC module!"
     exit 1
 fi
 
-echo ""
-echo -e "\033[36m==============================="
-echo "Installing REG-Linux to eMMC"
-echo -e "===============================\033[37m"
-echo ""
-echo "eMMC found at ${DISK}"
-echo ""
-
-if [ ! -b "${DISK}" ]; then
+if [ ! -b "${EMMCDISK}" ]; then
     echo "Error: eMMC not found."
+    echo "It was supposed to be in ${EMMCDISK} but that path doesn't exist."
     exit 1
 fi
 
+echo ""
+echo "==============================="
+echo "Installing REG-Linux to eMMC"
+echo "==============================="
+echo ""
+echo "eMMC found at ${EMMCDISK}"
 echo ""
 echo -n "WARNING: ALL DATA ON eMMC WILL BE ERASED! Continue (y/N)?  "
-read -n 1 ANSWER
+read -rn 1 ANSWER
 
 if [ ! "${ANSWER}" = "y" ]; then
     echo ""
@@ -52,42 +47,55 @@ if [ ! "${ANSWER}" = "y" ]; then
 fi
 echo ""
 
-umount ${DISK}* > /dev/null 2>&1
+umount "${EMMCDISK}"* > /dev/null 2>&1
 
 echo "Erasing eMMC ..."
-dd if=/dev/zero of="${DISK}" bs=1M count=1 conv=fsync > /dev/null 2>&1
+dd if=/dev/zero of="${EMMCDISK}" bs=1M count=1 conv=fsync > /dev/null 2>&1
 
 echo "Creating partitions"
-parted -s "${DISK}" mklabel msdos
-parted -s "${DISK}" -a optimal mkpart primary fat32 0% ${SYSTEM_SIZE}MiB
-parted -s "${DISK}" set 1 boot on
-parted -s "${DISK}" -a optimal mkpart primary ext4 ${SYSTEM_SIZE}MiB 100%
+SYSTEM_SIZE=$(lsblk -bno size "${BOOTPART}")
+parted -s "${EMMCDISK}" mklabel msdos
+parted -s "${EMMCDISK}" -a optimal mkpart primary fat32 0% ${SYSTEM_SIZE}
+parted -s "${EMMCDISK}" set 1 boot on
+parted -s "${EMMCDISK}" -a optimal mkpart primary ext4 ${SYSTEM_SIZE} 100%
 sync
 
 echo "Creating filesystems"
-dd if=/dev/zero of="${DISK}p1" bs=1M count=1 conv=fsync > /dev/null 2>&1
-mkfs.vfat -n SYSTEM -i ${UUID_SYSTEM//-/} ${DISK}p1 > /dev/null 2>&1
-dd if=/dev/zero of="${DISK}p2" bs=1M count=1 conv=fsync > /dev/null 2>&1
-mkfs.ext4 -L STORAGE -U ${UUID_STORAGE} ${DISK}p2 > /dev/null 2>&1
+dd if=/dev/zero of="${EMMCDISK}p1" bs=1M count=1 conv=fsync > /dev/null 2>&1
+mkfs.vfat -n REGLINUX "${EMMCDISK}p1" > /dev/null 2>&1
+dd if=/dev/zero of="${EMMCDISK}p2" bs=1M count=1 conv=fsync > /dev/null 2>&1
+mkfs.ext4 -L SHARE "${EMMCDISK}p2" > /dev/null 2>&1
 sync
 
 echo "Installing bootloader"
-dd if="${BOOT}" skip=8 of="${DISK}" bs=1k seek=8 count=768 conv=fsync > /dev/null 2>&1
+dd if="${BOOTDISK}" skip=8 of="${EMMCDISK}" bs=1k seek=8 count=768 conv=fsync > /dev/null 2>&1
 
 echo "Copying system files"
-
 mkdir -p ${TMP}
-
-mount -t vfat ${DISK}p1 ${TMP}
-
-cp -R /flash/. ${TMP}/
+mount -t vfat "${EMMCDISK}p1" ${TMP} || { echo "Failed to mount eMMC boot partition!"; exit 1; }
+cp -R /boot/* ${TMP}/
 sync
 
 echo "Adjusting partition UUIDs"
-
-[ -f "/${TMP}/boot/extlinux/extlinux.conf" ] && sed -i "s/label=REGLINUX/uuid=${UUID_SYSTEM}/g;s/uuid=[0-9a-f\-]*/uuid=${UUID_SYSTEM}/g" ${TMP}/boot/extlinux/extlinux.conf
-[ -f "/${TMP}/boot/boot.ini" ] && sed -i "s/label=REGLINUX/uuid=${UUID_SYSTEM}/g;s/uuid=[0-9a-f\-]*/uuid=${UUID_SYSTEM}/g" ${TMP}/boot/boot.ini
+NEWUUID=$(blkid -c /dev/null -o value -s UUID "${EMMCDISK}p1")
+if [ -n "$NEWUUID" ]; then
+    if [ -f /boot/boot.scr ]; then
+        dumpimage -T script -p 0 -o /tmp/boot.cmd.tmp /boot/boot.scr
+        OFFSET=$(grep -abo -m1 '^#' /tmp/boot.cmd.tmp | cut -d: -f1)
+        if [ -n "$OFFSET" ]; then
+            dd if="/tmp/boot.cmd.tmp" of="/tmp/boot.cmd" bs=1 skip="$OFFSET" 2>/dev/null
+        else
+            echo "Error extracting boot.cmd from boot.scr"
+            display_error
+        fi
+        sed -i "s/label=REGLINUX/root=UUID=${NEWUUID}/g;s/root=UUID=[a-fA-F0-9-]*/root=UUID=${NEWUUID}/g" {} /tmp/boot.cmd
+        mkimage -C none -A arm64 -T script -d /tmp/boot.cmd ${TMP}/boot.scr
+    fi
+    find "${TMP}/" -type f \( -iname "LinuxLoader.cfg" -o -iname "extlinux.conf" -o -iname "cmdline.txt" -o -iname "boot.cmd" -o -iname "boot.ini" -o -iname "uEnv.txt" -o -iname "syslinux.cfg" -o -iname "grub.cfg" \) -exec sed -i "s/label=REGLINUX/root=UUID=${NEWUUID}/g;s/root=UUID=[a-fA-F0-9-]*/root=UUID=${NEWUUID}/g" {} \+
+else
+    echo "Error getting UUID of eMMC boot partition"
+    display_error
+fi
 
 umount ${TMP}
-
-echo "Done"
+echo "Done. Power off the device, remove the SD card and boot from eMMC."
