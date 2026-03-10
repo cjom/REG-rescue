@@ -91,7 +91,7 @@ if [ -n "$NEWUUID" ]; then
             echo "Error extracting boot.cmd from boot.scr"
             display_error
         fi
-        sed -i "s/label=REGLINUX/root=UUID=${NEWUUID}/g;s/root=UUID=[a-fA-F0-9-]*/root=UUID=${NEWUUID}/g" {} /tmp/boot.cmd
+        sed -i "s/label=REGLINUX/root=UUID=${NEWUUID}/g;s/root=UUID=[a-fA-F0-9-]*/root=UUID=${NEWUUID}/g" /tmp/boot.cmd
         mkimage -C none -A arm64 -T script -d /tmp/boot.cmd ${TMP}/boot.scr
     fi
     find "${TMP}/" -type f \( -iname "LinuxLoader.cfg" -o -iname "extlinux.conf" -o -iname "cmdline.txt" -o -iname "boot.cmd" -o -iname "boot.ini" -o -iname "uEnv.txt" -o -iname "syslinux.cfg" -o -iname "grub.cfg" \) -exec sed -i "s/label=REGLINUX/root=UUID=${NEWUUID}/g;s/root=UUID=[a-fA-F0-9-]*/root=UUID=${NEWUUID}/g" {} \+
