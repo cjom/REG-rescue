@@ -49,15 +49,21 @@ echo ""
 
 umount "${EMMCDISK}"* > /dev/null 2>&1
 
+# Detect the start sector of the boot partition on the source disk (512-byte sectors).
+# This preserves the same bootloader gap on eMMC regardless of board (e.g. 1 MiB for
+# most boards, 16 MiB for OdroidC5 whose signed FIP is several MiB).
+PART1_START_SECTOR=$(cat /sys/class/block/$(basename "${BOOTPART}")/start)
+PART1_START_MIB=$(( PART1_START_SECTOR / 2048 ))
+
 echo "Erasing eMMC ..."
-dd if=/dev/zero of="${EMMCDISK}" bs=1M count=1 conv=fsync > /dev/null 2>&1
+dd if=/dev/zero of="${EMMCDISK}" bs=1M count="${PART1_START_MIB}" conv=fsync > /dev/null 2>&1
 
 echo "Creating partitions"
 SYSTEM_SIZE=$(blockdev --getsize64 "${BOOTPART}")
-# Round up to MiB boundary, add 1 MiB for the initial alignment offset
-SYSTEM_MIB=$(( (SYSTEM_SIZE + 1048575) / 1048576 + 1 ))
+# Round up to MiB boundary, add the same gap as the source disk
+SYSTEM_MIB=$(( (SYSTEM_SIZE + 1048575) / 1048576 + PART1_START_MIB ))
 parted -s "${EMMCDISK}" mklabel msdos
-parted -s "${EMMCDISK}" -a optimal mkpart primary fat32 1MiB "${SYSTEM_MIB}MiB"
+parted -s "${EMMCDISK}" -a optimal mkpart primary fat32 "${PART1_START_MIB}MiB" "${SYSTEM_MIB}MiB"
 parted -s "${EMMCDISK}" set 1 boot on
 parted -s "${EMMCDISK}" -a optimal mkpart primary ext4 "${SYSTEM_MIB}MiB" 100%
 sync
@@ -71,7 +77,9 @@ mkfs.ext4 -L SHARE "${EMMCDISK}p2" > /dev/null 2>&1
 sync
 
 echo "Installing bootloader"
-dd if="${BOOTDISK}" skip=8 of="${EMMCDISK}" bs=1k seek=8 count=768 conv=fsync > /dev/null 2>&1
+# Copy sector 1 through (PART1_START_SECTOR-1): the full bootloader area, skipping
+# only sector 0 (MBR/partition table) which was just written by parted.
+dd if="${BOOTDISK}" skip=1 of="${EMMCDISK}" bs=512 seek=1 count=$(( PART1_START_SECTOR - 1 )) conv=fsync > /dev/null 2>&1
 
 echo "Copying system files"
 mkdir -p ${TMP}
